@@ -108,17 +108,22 @@
             //carousels may have multiple pages we need to iterate through - find out how
             //many. we stop at 10 pages since, well, come on
             let page_count = parent.querySelectorAll('span.a-carousel-page-max')[0];
-            page_count = page_count ? parseInt(page_count.innerText) : 1;
-            page_count = Math.min(page_count, 10);
+            page_count = page_count && !isNaN(page_count) ? parseInt(page_count.innerText) : 1;
+            page_count = Math.min(page_count, 9);
             let current_page = 0;
 
             //now scrape items from each carousel page
-            while (current_page < page_count) {
+            while (current_page <= page_count) {
                 for (const carousel_item of carousel.querySelectorAll('li.a-carousel-card:not(.a-carousel-card-empty)')) {
                     let link = carousel_item.querySelectorAll('a.a-link-normal')[0];
                     link = link ? link.getAttribute('href').split('?')[0] : null;
 
                     if (!link) {
+                        continue;
+                    }
+
+                    if (!link.match(/\/[dg]p\//g) || link.match(/picassoRedirect\.html/g)) {
+                        //skip non-product links
                         continue;
                     }
 
@@ -161,10 +166,14 @@
                     };
                     rank += 1;
                     carousel_items.push(item_data)
+
+                    if(carousel_items.length > window.max_carousel_items) {
+                        break;
+                    }
                 }
 
                 current_page += 1;
-                if (current_page < page_count) {
+                if (current_page < page_count && carousel_items.length < window.max_carousel_items) {
                     let button = parent.querySelectorAll('.a-carousel-goto-nextpage')[0];
                     if (!button) {
                         break;
